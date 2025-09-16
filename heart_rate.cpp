@@ -1,7 +1,7 @@
 #include <iostream>
 #include <mosquitto.h>
 #include <jsoncpp/json/json.h>
-#include <httplib.h>
+#include "httplib.h"
 #include <thread>
 #include <chrono>
 #include <sstream>
@@ -12,7 +12,7 @@ const char *topic_heart_rate = "sensors/heart_rate";
 
 int main() {
     mosquitto_lib_init(); // inicijalizacija pre new
-    struct mosquitto *mosq = mosquitto_new("worker_heart_rate_sensor", true, NULL);
+    struct mosquitto *mosq = mosquitto_new("heart_rate_sensor", true, NULL);
     if (!mosq) {
         std::cerr << "Error: Unable to initialize MQTT client.\n";
         return 1;
@@ -27,7 +27,7 @@ int main() {
 
     while (true) {
         // menjaj endpoint prema HTTP serveru
-        auto res = cli.Get("/worker");
+        auto res = cli.Get("/environment");
         if (!res || res->status != 200) {
             std::cerr << "Error: Unable to fetch worker data.\n";
             std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -45,9 +45,9 @@ int main() {
         }
 
         // zavisi od toga kako server šalje vrednost
-        double worker_heart_rate = root["worker_heart_rate"].asDouble();
+        double heart_rate = root["heart_rate"].asDouble();
 
-        std::string payload = std::to_string(worker_heart_rate);
+        std::string payload = std::to_string(heart_rate);
         mosquitto_publish(mosq, NULL, topic_heart_rate,
                           payload.length(), payload.c_str(), 0, false);
 
@@ -56,7 +56,7 @@ int main() {
            ta vrednost se pretvara u double i čuva u promenljivoj worker_heart_rate. */
 
         std::cout << "Published worker heart rate: "
-                  << worker_heart_rate << " bpm\n";
+                  << heart_rate << " bpm\n";
 
         std::this_thread::sleep_for(std::chrono::seconds(5)); // periodično slanje
     }

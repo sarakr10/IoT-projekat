@@ -1,7 +1,7 @@
 #include <iostream>
 #include <mosquitto.h>
 #include <jsoncpp/json/json.h>
-#include <httplib.h>
+#include "httplib.h"
 #include <thread>
 #include <chrono>
 #include <sstream>
@@ -12,7 +12,7 @@ const char *topic_temperature = "sensors/temperature";
 
 int main() {
     mosquitto_lib_init();//pre new pozvati
-    struct mosquitto *mosq = mosquitto_new("worker_temperature_sensor", true, NULL);
+    struct mosquitto *mosq = mosquitto_new("temperature_sensor", true, NULL);
     if (!mosq) {
         std::cerr << "Error: Unable to initialize MQTT client.\n";
         return 1;
@@ -27,7 +27,7 @@ int main() {
 
     while (true) {
         //menja endpoint prema HTTP serveru
-        auto res = cli.Get("/worker");
+        auto res = cli.Get("/environment");
         if (!res || res->status != 200) {
             std::cerr << "Error: Unable to fetch worker data.\n";
             std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -45,9 +45,9 @@ int main() {
         }
 
         //zavisi od toga kako server šalje vrednost
-        double worker_temperature = root["worker_temperature"].asDouble();
+        double temperature = root["temperature"].asDouble();
 
-        std::string payload = std::to_string(worker_temperature);
+        std::string payload = std::to_string(temperature);
         mosquitto_publish(mosq, NULL, topic_temperature,
                           payload.length(), payload.c_str(), 0, false);
 
@@ -56,7 +56,7 @@ int main() {
                             ta vrednost se pretvara u double i čuva u promenljivoj worker_temperature.*/
 
         std::cout << "Published worker temperature: "
-                  << worker_temperature << " °C\n";
+                  << temperature << " °C\n";
 
         std::this_thread::sleep_for(std::chrono::seconds(5)); // periodično slanje
     }

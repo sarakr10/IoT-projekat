@@ -1,7 +1,7 @@
 #include <iostream>
 #include <mosquitto.h>
 #include <jsoncpp/json/json.h>
-#include <httplib.h>
+#include "httplib.h"
 
 const char *mqtt_host = "localhost";        //broker
 const int mqtt_port = 1883;                 //port na kom broker slusa
@@ -18,7 +18,7 @@ void notifyEnvironment(const std::string &state) {
     httplib::Params params;
 
     params.emplace("emergency_call_module", state);                 //kolekcija parova kljuc - vrednost
-    auto res = cli.Post("/update_module_state", params);
+    auto res = cli.Post("/update_relay_state", params);
     if (res && res->status == 200) {
         std::cout << "Notified environment: Emergency call module state " << state << std::endl;
     } else {

@@ -3,8 +3,12 @@
 #include <chrono>
 #include <thread>
 #include <jsoncpp/json/json.h> // JSON library
+<<<<<<< HEAD
 #include <httplib.h> // HTTP library (make sure you have httplib.h)
 #include <mutex>
+=======
+#include "httplib.h" // HTTP library (make sure you have httplib.h)
+>>>>>>> c8b50aef66dd478245bab414f9bd5f877a5c8658
 
 std::mutex mtx;
 using namespace std;

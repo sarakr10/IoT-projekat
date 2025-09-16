@@ -1,5 +1,5 @@
 #include <iostream>
-#include <cpphttplib/httplib.h> // HTTP library za c++
+#include "httplib.h" // HTTP library za c++
 
 int main() {
     // Kreirati HTTP klijenta

@@ -3,9 +3,16 @@
 #include <chrono>
 #include <thread>
 #include <jsoncpp/json/json.h> // JSON library
+<<<<<<< HEAD
+#include <httplib.h> // HTTP library (make sure you have httplib.h)
+#include <mutex>
+=======
 #include "httplib.h" // HTTP library (make sure you have httplib.h)
+>>>>>>> c8b50aef66dd478245bab414f9bd5f877a5c8658
 
+std::mutex mtx;
 using namespace std;
+
 
 struct EnvironmentState {
     double temperature;
@@ -21,8 +28,10 @@ struct EnvironmentState {
 
 void simulateEnvironment(EnvironmentState& state) {
 
+   
     while (true) {
 
+         mtx.lock();
         //temperatura moze da se promeni za maksimalno 1 stepen po iteraciji
         state.temperature += ((rand() % 5) - 2) * 0.5; // random +/- 1°C
 
@@ -45,6 +54,9 @@ void simulateEnvironment(EnvironmentState& state) {
             state.emergency_call_active = "OFF";
        }
 
+       mtx.unlock();
+
+        mtx.lock();
        
         Json::Value root;
         root["temperature"] = state.temperature;
@@ -56,6 +68,7 @@ void simulateEnvironment(EnvironmentState& state) {
         std::ofstream file("construction_site.json");
         file << root;
         file.close();
+        mtx.unlock();
         
         // Print the current state
         std::cout << "Temperature: " << state.temperature << " °C" <<std::endl;
@@ -73,6 +86,7 @@ void startHttpServer(EnvironmentState& state) {
     httplib::Server svr;
 
     svr.Get("/environment", [&state](const httplib::Request& req, httplib::Response& res) {
+        mtx.lock();
         Json::Value root;
         root["temperature"] = state.temperature;
         root["heart_rate"] = state.heart_rate;
@@ -82,8 +96,10 @@ void startHttpServer(EnvironmentState& state) {
         Json::StreamWriterBuilder writer;
         std::string output = Json::writeString(writer, root);
         res.set_content(output, "application/json");
+        mtx.unlock();
     });
 
+    //"update_relay_state" je endpoint
     svr.Post("/update_relay_state", [&state](const httplib::Request& req, httplib::Response& res) {
     
         //parametar poruke koja se salje iz aktuatora

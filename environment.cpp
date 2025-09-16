@@ -86,6 +86,7 @@ void startHttpServer(EnvironmentState& state) {
     httplib::Server svr;
 
     svr.Get("/environment", [&state](const httplib::Request& req, httplib::Response& res) {
+        mtx.lock();
         Json::Value root;
         root["temperature"] = state.temperature;
         root["heart_rate"] = state.heart_rate;
@@ -95,6 +96,7 @@ void startHttpServer(EnvironmentState& state) {
         Json::StreamWriterBuilder writer;
         std::string output = Json::writeString(writer, root);
         res.set_content(output, "application/json");
+        mtx.unlock();
     });
 
     //"update_relay_state" je endpoint

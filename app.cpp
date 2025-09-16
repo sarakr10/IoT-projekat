@@ -1,17 +1,20 @@
 #include <iostream>
-#include <cpphttplib/httplib.h> // HTTP library for C++
+#include <cpphttplib/httplib.h> // HTTP library za c++
 
 int main() {
-    // Create HTTP client
+    // Kreirati HTTP klijenta
     httplib::Client client("http://localhost:8080");
-    // Send HTTP GET request to retrieve current environment state
+    
+    //Slanje HTTP GET zahteva na server da bi se dobilo trenutno stanje okruzenja
     auto res = client.Get("/environment");
-    // Check if the request was successful
+    
+    // Provera da li je zahtev uspesno obradjen
     if (res && res->status == 200) {
-        // Print response body (environment state)
-        std::cout << "Current Environment State:\n" << res->body << std::endl;
+        
+        // Ispis tela odgovora (stanje okruzenja)
+        std::cout << "Trenutno stanje okruzenja:\n" << res->body << std::endl;
     } else {
-        std::cerr << "Error: Unable to retrieve environment state.\n";
+        std::cerr << "Error: Neuspesno vracanje stanja.\n";
         return 1;
     }
     return 0;

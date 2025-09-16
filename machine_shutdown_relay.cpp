@@ -3,6 +3,8 @@
 #include <jsoncpp/json/json.h>
 #include <httplib.h>
 
+//aaaaaaaaaaaaaaaaaaaaaaaaaa
+
 const char *mqtt_host = "localhost";        //broker
 const int mqtt_port = 1883;                 //port na kom broker slusa
 

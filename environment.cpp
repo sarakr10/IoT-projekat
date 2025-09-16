@@ -69,6 +69,7 @@ void simulateEnvironment(EnvironmentState& state) {
 }
 
 void startHttpServer(EnvironmentState& state) {
+
     httplib::Server svr;
 
     svr.Get("/environment", [&state](const httplib::Request& req, httplib::Response& res) {
@@ -83,27 +84,25 @@ void startHttpServer(EnvironmentState& state) {
         res.set_content(output, "application/json");
     });
 
-
-    //DOVDE SAM STIGLA
     svr.Post("/update_relay_state", [&state](const httplib::Request& req, httplib::Response& res) {
     
         //parametar poruke koja se salje iz aktuatora
         //params.emplace("emergency_call_module", state);
 
-     std::string response_msg;
-    if (req.has_param("emergency_call_module")) {
-        state.emergency_call_active = req.get_param_value("emergency_call_module");
-        response_msg += "Emergency call module state updated. ";
-    }
-    if (req.has_param("shutdown_relay")) {
-        state.machine_shutdown_active = req.get_param_value("shutdown_relay");
-        response_msg += "Shutdown relay state updated.";
-    }
-    if (response_msg.empty()){
-        response_msg = "Missing state parameters.";
-    }
+        std::string response_msg;
+        if (req.has_param("emergency_call_module")) {
+            state.emergency_call_active = req.get_param_value("emergency_call_module");
+            response_msg += "Emergency call module state updated. ";
+        }
+        if (req.has_param("shutdown_relay")) {
+            state.machine_shutdown_active = req.get_param_value("shutdown_relay");
+            response_msg += "Shutdown relay state updated.";
+        }
+        if (response_msg.empty()){
+            response_msg = "Missing state parameters.";
+        }
+       
         res.set_content(response_msg, "text/plain");
-
         
     });
 

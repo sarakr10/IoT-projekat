@@ -107,7 +107,7 @@ void startHttpServer(EnvironmentState& state) {
         
     });
 
-    svr.listen("0.0.0.0", 8080); // Ensure correct port
+    svr.listen("0.0.0.0", 8080); 
 }
 
 int main() {

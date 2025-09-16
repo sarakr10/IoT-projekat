@@ -111,7 +111,7 @@ void startHttpServer(EnvironmentState& state) {
 
 int main() {
     EnvironmentState environmentState;
-    environmentState.temperature = 36.5; // Initial temperature in Celsius
+    environmentState.temperature = 36.5; 
     environmentState.heart_rate = 70;
     environmentState.emergency_call_active = "OFF";
     environmentState.machine_shutdown_active = "OFF";

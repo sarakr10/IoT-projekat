@@ -15,8 +15,8 @@
 #define TEMPERATURE_TOPIC "sensors/temperature"
 #define HEART_RATE_TOPIC "sensors/heart_rate"
 
-#define EMERGENCY_CALL_TOPIC "actuators/emergency_call"
-#define MACHINE_SHUTDOWN_TOPIC "actuators/machine_shutdown"
+#define EMERGENCY_CALL_TOPIC "actuators/emergency_call_module"
+#define MACHINE_SHUTDOWN_TOPIC "actuators/shutdown_relay"
 
 using namespace std;
 

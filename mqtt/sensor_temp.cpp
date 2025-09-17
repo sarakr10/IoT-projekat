@@ -68,7 +68,7 @@ int main() {
                   << temperature << " °C\n";
         std::cout<<std::endl;
 
-        std::this_thread::sleep_for(std::chrono::seconds(5)); // periodično slanje
+        std::this_thread::sleep_for(std::chrono::seconds(3)); // periodično slanje
     }
 
     mosquitto_destroy(mosq);

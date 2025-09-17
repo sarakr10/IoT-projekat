@@ -37,7 +37,7 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
 
     if (payload == "ON") {
 
-        std::coout << std::endl;
+        std::cout << std::endl;
 
         std::cout<<std::endl;
 

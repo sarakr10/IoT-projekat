@@ -20,9 +20,13 @@ void notifyEnvironment(const std::string &state) {
     params.emplace("shutdown_relay", state);                 //kolekcija parova kljuc - vrednost
     auto res = cli.Post("/update_relay_state", params);
     if (res && res->status == 200) {
+        std::cout<<std::endl;
         std::cout << "Notified environment: Machine Shutdown Relay state " << state << std::endl;
+        std::cout<<std::endl;
     } else {
+        std::cout<<std::endl;
         std::cerr << "Failed to notify environment" << std::endl;
+        std::cout<<std::endl;
     }
 }
 
@@ -33,9 +37,11 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
     std::cout << "Payload: " << payload << std::endl;
 
     if (payload == "ON") {
+         std::cout<<std::endl;
         std::cout << "Machine Shutdown Relay turned ON" << std::endl;
         notifyEnvironment("ON");
     } else if (payload == "OFF") {
+         std::cout<<std::endl;
         std::cout << "Machine Shutdown Relay turned OFF" << std::endl;
         notifyEnvironment("OFF");
     }

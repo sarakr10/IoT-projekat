@@ -36,7 +36,7 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
     std::cout << "Payload: " << payload << std::endl;
 
     if (payload == "ON") {
-        std::coout<<std::endl;
+        std::cout<<std::endl;
         std::cout << "Emergency Call Module actuator turned ON" << std::endl;
         notifyEnvironment("ON");
       

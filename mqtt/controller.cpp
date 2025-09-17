@@ -51,7 +51,9 @@ void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mo
                 std::cout << std::endl;
             }
          //Obrada primljene poruke
-        if(strcmp(message->topic , HEART_RATE_TOPIC) == 0) {
+        
+    }
+    if(strcmp(message->topic , HEART_RATE_TOPIC) == 0) {
             double heart_rate = stod((char*)message->payload);
             const char* command = (heart_rate >=105.0 || heart_rate <= 45.0) ? COMMAND_ON : COMMAND_OFF;
 
@@ -66,7 +68,6 @@ void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mo
                 std::cout << std::endl;
             }
         }
-    }
 }
 }
 

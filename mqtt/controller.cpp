@@ -68,6 +68,7 @@ void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mo
         }
     }
 }
+}
 
 int main(int argc, char* argv[]) {
     struct mosquitto* mosq = NULL;

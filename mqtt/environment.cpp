@@ -28,7 +28,7 @@ void simulateEnvironment(EnvironmentState& state) {
 
    
     while (true) {
-       std::this_thread::sleep_for(std::chrono::seconds(3));
+
        std::lock_guard<std::mutex> lock(state_mutex);
         //temperatura moze da se promeni za maksimalno 1 stepen po iteraciji
         state.temperature += ((rand() % 5) - 2) * 0.5; // random +/- 1°C

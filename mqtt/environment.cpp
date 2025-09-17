@@ -1,40 +1,31 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
 #include <chrono>
 #include <thread>
 #include <jsoncpp/json/json.h> // JSON library
-#include <cstdlib>
 #include "httplib.h" // HTTP library (make sure you have httplib.h)
 
-
 using namespace std;
-
 
 struct EnvironmentState {
     double temperature;
     double heart_rate;
-    
+
     string emergency_call_active;
     string machine_shutdown_active;
 
-    bool worker_replaced;
-
 };
 
-
 void simulateEnvironment(EnvironmentState& state) {
-
-   
+    // simulira parametre
     while (true) {
-       
-        //temperatura moze da se promeni za maksimalno 1 stepen po iteraciji
-        state.temperature += ((rand() % 5) - 2) * 0.5; // random +/- 1°C
+       static int t = 0;
+        state.temperature = 36.5 + 2.0 * sin(t * 0.1); // promena ±2°C
+        state.heart_rate = 100 + 5.0 * sin(t * 0.2);    // promena ±5 bpm
+        t++;
 
-        //otkucaji srca mogu da se promene za maksimalno 2bpm po iteraciji
-        state.heart_rate += ((rand() % 5) - 2); // random +/- 2 bpm
-    
-
-       if(state.temperature >= 38.5){
+        if(state.temperature >= 38.5){
             state.machine_shutdown_active = "ON";
             if(state.heart_rate >=105 || state.heart_rate <=45){
                  state.emergency_call_active = "ON";
@@ -49,43 +40,33 @@ void simulateEnvironment(EnvironmentState& state) {
             state.emergency_call_active = "OFF";
        }
 
-    
-       
+
         Json::Value root;
         root["temperature"] = state.temperature;
         root["heart_rate"] = state.heart_rate;
         root["machine_shutdown_active"] = state.machine_shutdown_active;
         root["emergency_call_active"] = state.emergency_call_active;
-       
 
-        std::ofstream file("construction_site.json");
+        std::ofstream file("environment.json");
         file << root;
         file.close();
-       
         
-        // Print the current state
-        std::cout << std::endl;
-        std::cout << "*********************************" << std::endl;
+        //Ispis trenutnog stanja
         std::cout << "Temperature: " << state.temperature << " °C" <<std::endl;
-        std::cout << "Heart rate: " << state.heart_rate << " rpm" << std::endl;
-        std::cout << "Machine shutdown module : " << state.machine_shutdown_active <<  std::endl;
-        std::cout << "Emergency call active : " << state.emergency_call_active <<  std::endl;
+        std::cout << "Heart rate: " << state.heart_rate << " bpm" << std::endl;
+        std::cout << "Machine Shutdown Relay: " << state.machine_shutdown_active << std::endl;
+        std::cout << "Emergency call active " << state.emergency_call_active << std::endl;
         std::cout << "*********************************" << std::endl;
-        std::cout << std::endl;
 
         std::this_thread::sleep_for(std::chrono::seconds(3)); 
     }
 }
 
 void startHttpServer(EnvironmentState& state) {
-
     httplib::Server svr;
 
     svr.Get("/environment", [&state](const httplib::Request& req, httplib::Response& res) {
-       
-        /*
         Json::Value root;
-        
         root["temperature"] = state.temperature;
         root["heart_rate"] = state.heart_rate;
         root["machine_shutdown_active"] = state.machine_shutdown_active;
@@ -94,66 +75,38 @@ void startHttpServer(EnvironmentState& state) {
         Json::StreamWriterBuilder writer;
         std::string output = Json::writeString(writer, root);
         res.set_content(output, "application/json");
-        */
-
-        //HTTP server vise ne pristupa state direktno nego cita iz JSON fajla, u suprotnom
-        //bi doslo do nekonzistentnosti izmedju podataka u terminalu i podataka  u JSONu
-        std::ifstream file("construction_site.json");
-        if(!file.is_open()){
-            res.status = 500;
-            res.set_content("Error: cannot open JSON file", "text/plain");
-            return;
-        }
-        
-        std::stringstream buffer;
-        buffer<<file.rdbuf(); //ucitava ceo JSOSN fajl u string
-        file.close();
-        res.set_content(buffer.str(), "application/json"); */
     });
 
-    //"update_relay_state" je endpoint
     svr.Post("/update_relay_state", [&state](const httplib::Request& req, httplib::Response& res) {
-    
-        //parametar poruke koja se salje iz aktuatora
-        //params.emplace("emergency_call_module", state);
-
-        std::string response_msg;
-        {
-         
-            if (req.has_param("emergency_call_module")) {
-                state.emergency_call_active = req.get_param_value("emergency_call_module");
-                response_msg += "Emergency call module state updated. ";
-            }
-            if (req.has_param("shutdown_relay")) {
-                state.machine_shutdown_active = req.get_param_value("shutdown_relay");
-                response_msg += "Shutdown relay state updated.";
-            }
+        //Stanje ventilatora
+        if (req.has_param("emergency_call_module")) {
+            state.relay_vent_state = req.get_param_value("emergency_call_module");
+            res.set_content("Emergency call module state updated", "text/plain");
+        } else {
+            res.set_content("Missing emergency call state parameter", "text/plain");
         }
-        if (response_msg.empty()){
-            response_msg = "Missing state parameters.";
+        //Stanje pumpe
+        if (req.has_param("shutdown_relay")) {
+            state.relay_pump_state = req.get_param_value("pump");
+            res.set_content("Machine shutdown relay vent state updated", "text/plain");
+        } else {
+            res.set_content("Missing machine shutdown relay state parameter", "text/plain");
         }
-    
-       
-        res.set_content(response_msg, "text/plain");
-        
     });
 
-    svr.listen("0.0.0.0", 8080); 
+    svr.listen("0.0.0.0", 8080); // Ensure correct port
 }
 
 int main() {
     EnvironmentState environmentState;
-    environmentState.temperature = 36.5; 
-    environmentState.heart_rate = 100;
+    environmentState.temperature = 36.5; // Initial temperature in Celsius
+    environmentState.heart_rate = 100.0; // Initial humidity percentage
     environmentState.emergency_call_active = "OFF";
     environmentState.machine_shutdown_active = "OFF";
 
-    //nit jer je simulate environment beskonacna petlja pa se
-    //http server nikada ne bi pokrenuo
     std::thread simulation_thread(simulateEnvironment, std::ref(environmentState));
     startHttpServer(environmentState);
     
     simulation_thread.join();
     return 0;
 }
-

@@ -49,7 +49,7 @@ int main() {
 
         std::string payload = std::to_string(heart_rate);
         mosquitto_publish(mosq, NULL, topic_heart_rate,
-                          payload.length(), payload.c_str(), 0, false);
+                          payload.length(), payload.c_str(), 0, true);
 
         /* root je ceo JSON objekat koji je server poslao.
            iz njega vadimo vrednost pod ključem "worker_heart_rate".

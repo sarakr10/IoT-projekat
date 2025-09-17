@@ -79,4 +79,3 @@ int main() {
     mosquitto_lib_cleanup();
     return 0;
 }
-

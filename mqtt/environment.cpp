@@ -69,14 +69,14 @@ void simulateEnvironment(EnvironmentState& state) {
        
         
         // Print the current state
-        std::cout<<std::endl;
+        std::cout << std::endl;
         std::cout << "*********************************" << std::endl;
         std::cout << "Temperature: " << state.temperature << " °C" <<std::endl;
         std::cout << "Heart rate: " << state.heart_rate << " rpm" << std::endl;
         std::cout << "Machine shutdown module : " << state.machine_shutdown_active <<  std::endl;
         std::cout << "Emergency call active : " << state.emergency_call_active <<  std::endl;
         std::cout << "*********************************" << std::endl;
-        std::cout<<std::endl;
+        std::cout << std::endl;
 
         std::this_thread::sleep_for(std::chrono::seconds(3)); 
     }

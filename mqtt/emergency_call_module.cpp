@@ -20,10 +20,10 @@ void notifyEnvironment(const std::string &state) {
     params.emplace("emergency_call_module", state);                 //kolekcija parova kljuc - vrednost
     auto res = cli.Post("/update_relay_state", params);
     if (res && res->status == 200) {
-        std::cout<<std::endl;
+        std::cout << std::endl;
         std::cout << "Notified environment: Emergency call module state " << state << std::endl;
     } else {
-        std::cout<<std::endl;
+        std::cout << std::endl;
         std::cerr << "Failed to notify environment" << std::endl;
     }
 }
@@ -31,17 +31,17 @@ void notifyEnvironment(const std::string &state) {
 //reaguje na poruke sa brokera i prosledjuje stanje modula http serveru
 void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message) {
     std::string payload(static_cast<char *>(message->payload), message->payloadlen);
-     std::cout<<std::endl;
+     std::cout << std::endl;
     std::cout << "Message received on topic: " << message->topic << std::endl;
     std::cout << "Payload: " << payload << std::endl;
 
     if (payload == "ON") {
-        std::coout<<std::endl;
+        std::coout << std::endl;
         std::cout << "Emergency Call Module actuator turned ON" << std::endl;
         notifyEnvironment("ON");
       
     } else if (payload == "OFF") {
-        std::cout<<std::endl;
+        std::cout << std::endl;
         std::cout << "Emergency Call Module acturator turned OFF" << std::endl;
         notifyEnvironment("OFF");
       

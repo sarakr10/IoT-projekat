@@ -20,11 +20,12 @@ struct EnvironmentState {
 void simulateEnvironment(EnvironmentState& state) {
     // simulira parametre
     while (true) {
-       static int t = 0;
-        state.temperature = 36.5 + 2.0 * sin(t * 0.1); // promena ±2°C
-        state.heart_rate = 100 + 5.0 * sin(t * 0.2);    // promena ±5 bpm
-        t++;
+       //temperatura moze da se promeni za maksimalno 1 stepen po iteraciji
+        state.temperature += ((rand() % 5) - 2) * 0.5; // random +/- 1°C
 
+        //otkucaji srca mogu da se promene za maksimalno 2bpm po iteraciji
+        state.heart_rate += ((rand() % 5) - 2); // random +/- 2 bpm
+        
         if(state.temperature >= 38.5){
             state.machine_shutdown_active = "ON";
             if(state.heart_rate >=105 || state.heart_rate <=45){

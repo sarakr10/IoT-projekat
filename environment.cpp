@@ -145,6 +145,8 @@ int main() {
     environmentState.emergency_call_active = "OFF";
     environmentState.machine_shutdown_active = "OFF";
 
+    //nit jer je simulate environment beskonacna petlja pa se
+    //http server nikada ne bi pokrenuo
     std::thread simulation_thread(simulateEnvironment, std::ref(environmentState));
     startHttpServer(environmentState);
     

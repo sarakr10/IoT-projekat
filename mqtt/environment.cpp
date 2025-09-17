@@ -3,8 +3,8 @@
 #include <chrono>
 #include <thread>
 #include <jsoncpp/json/json.h> // JSON library
-
-
+#include <mutex>
+#include <cstdlib>
 #include "httplib.h" // HTTP library (make sure you have httplib.h)
 
 
@@ -22,13 +22,14 @@ struct EnvironmentState {
 
 };
 
+std::mutex state_mutex;
 
 void simulateEnvironment(EnvironmentState& state) {
 
    
     while (true) {
-
-       
+       std::this_thread::sleep_for(std::chrono::seconds(3));
+       std::lock_guard<std::mutex> lock(state_mutex);
         //temperatura moze da se promeni za maksimalno 1 stepen po iteraciji
         state.temperature += ((rand() % 5) - 2) * 0.5; // random +/- 1°C
 
@@ -85,8 +86,9 @@ void startHttpServer(EnvironmentState& state) {
 
     svr.Get("/environment", [&state](const httplib::Request& req, httplib::Response& res) {
        
-        /*
+        
         Json::Value root;
+        std::lock_guard<std::mutex> lock(state_mutex);
         root["temperature"] = state.temperature;
         root["heart_rate"] = state.heart_rate;
         root["machine_shutdown_active"] = state.machine_shutdown_active;
@@ -95,7 +97,7 @@ void startHttpServer(EnvironmentState& state) {
         Json::StreamWriterBuilder writer;
         std::string output = Json::writeString(writer, root);
         res.set_content(output, "application/json");
-        */
+        /*
 
         //HTTP server vise ne pristupa state direktno nego cita iz JSON fajla, u suprotnom
         //bi doslo do nekonzistentnosti izmedju podataka u terminalu i podataka  u JSONu
@@ -105,11 +107,11 @@ void startHttpServer(EnvironmentState& state) {
             res.set_content("Error: cannot open JSON file", "text/plain");
             return;
         }
-
+        
         std::stringstream buffer;
         buffer<<file.rdbuf(); //ucitava ceo JSOSN fajl u string
         file.close();
-        res.set_content(buffer.str(), "application/json");
+        res.set_content(buffer.str(), "application/json"); */
     });
 
     //"update_relay_state" je endpoint
@@ -119,17 +121,21 @@ void startHttpServer(EnvironmentState& state) {
         //params.emplace("emergency_call_module", state);
 
         std::string response_msg;
-        if (req.has_param("emergency_call_module")) {
-            state.emergency_call_active = req.get_param_value("emergency_call_module");
-            response_msg += "Emergency call module state updated. ";
-        }
-        if (req.has_param("shutdown_relay")) {
-            state.machine_shutdown_active = req.get_param_value("shutdown_relay");
-            response_msg += "Shutdown relay state updated.";
+        {
+          std::lock_guard<std::mutex> lock(state_mutex);
+            if (req.has_param("emergency_call_module")) {
+                state.emergency_call_active = req.get_param_value("emergency_call_module");
+                response_msg += "Emergency call module state updated. ";
+            }
+            if (req.has_param("shutdown_relay")) {
+                state.machine_shutdown_active = req.get_param_value("shutdown_relay");
+                response_msg += "Shutdown relay state updated.";
+            }
         }
         if (response_msg.empty()){
             response_msg = "Missing state parameters.";
         }
+    
        
         res.set_content(response_msg, "text/plain");
         

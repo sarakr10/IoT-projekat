@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <cstring>
 #include <mosquitto.h>
@@ -28,9 +29,12 @@ using namespace std;
 // MQTT callback funkcija
 void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mosquitto_message* message) {
     if (message->payloadlen) {
-        std::cout << "Poruka je primljena na topic " << message->topic << std::endl;
-        std::cout << "Payload: " << (char*)message->payload << std::endl;
 
+        std::cout<<std::endl;
+        std::cout << "Received message on topic " << message->topic << std::endl;
+        std::cout<<std::endl;
+        std::cout << "Payload: " << (char*)message->payload << std::endl;
+        std::cout<<std::endl;
         
         //Obrada primljene poruke
         if (strcmp(message->topic, TEMPERATURE_TOPIC) == 0) {
@@ -42,9 +46,10 @@ void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mo
                 //Publish komanda za iskljucivanje radnikove masine
                 mosquitto_publish(mosq, NULL, MACHINE_SHUTDOWN_TOPIC, strlen(command), command, 1, true);
                 // Output na temrinal
-                std::cout << "\nObjavljena komanda " << command << " na topic: " << MACHINE_SHUTDOWN_TOPIC << std::endl;
+                std::cout << std::endl;
+                std::cout << "\nPublished command " << command << " to topic: " << MACHINE_SHUTDOWN_TOPIC << std::endl;
+                std::cout << std::endl;
             }
-        }
          //Obrada primljene poruke
         if(strcmp(message->topic , HEART_RATE_TOPIC) == 0) {
             double heart_rate = stod((char*)message->payload);
@@ -56,10 +61,13 @@ void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mo
                 mosquitto_publish(mosq, NULL,  EMERGENCY_CALL_TOPIC , strlen(command), command, 1, true);
 
                 // Output na terminal
-                std::cout << "\nObjavljena komanda" << command << " na topic " <<  EMERGENCY_CALL_TOPIC << std::endl;
+                std::cout << std::endl;
+                std::cout << "\nPublished command " << command << " to topic " << EMERGENCY_CALL_TOPIC << std::endl;
+                std::cout << std::endl;
             }
         }
     }
+}
 }
 
 int main(int argc, char* argv[]) {
@@ -72,24 +80,31 @@ int main(int argc, char* argv[]) {
     //Kreirati instancu mosquitto klijenta
     mosq = mosquitto_new("controller_client", true, NULL);
     if (!mosq) {
-        std::cerr << "Error: Neuspesno kreiranje instance mosquitto klijenta" << std::endl;
+        std::cout << std::endl;
+        std::cerr << "Error: Failed to create instance of mosquitto client" << std::endl;
+        std::cout << std::endl;
         mosquitto_lib_cleanup();
         return 1;
     }
   
   //Povezivanje na MQTT broker
     if (mosquitto_connect(mosq, MQTT_SERVER_ADDRESS, MQTT_SERVER_PORT, 60) != MOSQ_ERR_SUCCESS) {
-        std::cerr << "Error: Neuspesno povezivanje na MQTT broker" << std::endl;
+        std::cout << std::endl;
+        std::cerr << "Error: Failed to connect to MQTT broker" << std::endl;
+       std::cout << std::endl;
         mosquitto_destroy(mosq);
         mosquitto_lib_cleanup();
         return 1;
     }
-    cout << "Povezano na MQTT broker" << std::endl;
+    std::cout << std::endl;
+    cout << "Connected to MQTT broker" << std::endl;
+    std::cout << std::endl;
 
     // Subscribe na topic senzora
     mosquitto_subscribe(mosq, NULL, SENSORS, 1);
-    cout << "Subscribovan na " << SENSORS " topic" << endl;
-
+    std::cout << std::endl;
+    cout << "Subscribed to " << SENSORS << " topic" << endl;
+    std::cout << std::endl;
     
     //Postavka callback poruka
     mosquitto_message_callback_set(mosq, on_message_callback);
@@ -101,8 +116,8 @@ int main(int argc, char* argv[]) {
     //Prekid konekcije sa MQTT brokera
     mosquitto_destroy(mosq);
     mosquitto_lib_cleanup();
-    cout << "Prekid konekcije sa MQTT brokerom" << std::endl;
-
+    std::cout << std::endl;
+    cout << "Disconnected from MQTT broker" << std::endl;
+    std::cout << std::endl;
     return 0;
 }
-

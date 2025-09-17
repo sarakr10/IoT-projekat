@@ -80,14 +80,14 @@ void startHttpServer(EnvironmentState& state) {
     svr.Post("/update_relay_state", [&state](const httplib::Request& req, httplib::Response& res) {
         //Stanje ventilatora
         if (req.has_param("emergency_call_module")) {
-            state.relay_vent_state = req.get_param_value("emergency_call_module");
+            state.emergency_call_active = req.get_param_value("emergency_call_module");
             res.set_content("Emergency call module state updated", "text/plain");
         } else {
             res.set_content("Missing emergency call state parameter", "text/plain");
         }
         //Stanje pumpe
         if (req.has_param("shutdown_relay")) {
-            state.relay_pump_state = req.get_param_value("pump");
+            state.machine_shutdown_active = req.get_param_value("pump");
             res.set_content("Machine shutdown relay vent state updated", "text/plain");
         } else {
             res.set_content("Missing machine shutdown relay state parameter", "text/plain");

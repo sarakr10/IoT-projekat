@@ -3,7 +3,6 @@
 #include <chrono>
 #include <thread>
 #include <jsoncpp/json/json.h> // JSON library
-#include <mutex>
 #include <cstdlib>
 #include "httplib.h" // HTTP library (make sure you have httplib.h)
 
@@ -22,14 +21,12 @@ struct EnvironmentState {
 
 };
 
-std::mutex state_mutex;
 
 void simulateEnvironment(EnvironmentState& state) {
 
    
     while (true) {
-
-       std::lock_guard<std::mutex> lock(state_mutex);
+        std::this_thread::sleep_for(std::chrono::seconds(3)); 
         //temperatura moze da se promeni za maksimalno 1 stepen po iteraciji
         state.temperature += ((rand() % 5) - 2) * 0.5; // random +/- 1°C
 
@@ -88,7 +85,7 @@ void startHttpServer(EnvironmentState& state) {
        
         
         Json::Value root;
-        std::lock_guard<std::mutex> lock(state_mutex);
+        
         root["temperature"] = state.temperature;
         root["heart_rate"] = state.heart_rate;
         root["machine_shutdown_active"] = state.machine_shutdown_active;
@@ -122,7 +119,7 @@ void startHttpServer(EnvironmentState& state) {
 
         std::string response_msg;
         {
-          std::lock_guard<std::mutex> lock(state_mutex);
+         
             if (req.has_param("emergency_call_module")) {
                 state.emergency_call_active = req.get_param_value("emergency_call_module");
                 response_msg += "Emergency call module state updated. ";

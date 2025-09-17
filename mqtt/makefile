@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -std=c++11 -Iinclude -pthread
+CXXFLAGS = -Wall -std=c++11 -Iinclude
 LIBS = -lmosquitto -ljsoncpp -lpthread
 
 # Lista izvora i binarnih fajlova

@@ -108,7 +108,7 @@ void startHttpServer(EnvironmentState& state) {
         std::stringstream buffer;
         buffer<<file.rdbuf(); //ucitava ceo JSOSN fajl u string
         file.close();
-        res.set_content(buffer.str(), "application/json"); */
+        res.set_content(buffer.str(), "application/json"); 
     });
 
     //"update_relay_state" je endpoint

@@ -4,12 +4,9 @@
 #include <thread>
 #include <jsoncpp/json/json.h> // JSON library
 
-#include <httplib.h> // HTTP library (make sure you have httplib.h)
 
-=======
 #include "httplib.h" // HTTP library (make sure you have httplib.h)
->>>>>>> c8b50aef66dd478245bab414f9bd5f877a5c8658
-
+#include <cstdlib> // for rand() and srand()
 
 using namespace std;
 

@@ -26,7 +26,7 @@ void simulateEnvironment(EnvironmentState& state) {
 
    
     while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(3)); 
+       
         //temperatura moze da se promeni za maksimalno 1 stepen po iteraciji
         state.temperature += ((rand() % 5) - 2) * 0.5; // random +/- 1°C
 
@@ -83,7 +83,7 @@ void startHttpServer(EnvironmentState& state) {
 
     svr.Get("/environment", [&state](const httplib::Request& req, httplib::Response& res) {
        
-        
+        /*
         Json::Value root;
         
         root["temperature"] = state.temperature;
@@ -94,7 +94,7 @@ void startHttpServer(EnvironmentState& state) {
         Json::StreamWriterBuilder writer;
         std::string output = Json::writeString(writer, root);
         res.set_content(output, "application/json");
-        /*
+        */
 
         //HTTP server vise ne pristupa state direktno nego cita iz JSON fajla, u suprotnom
         //bi doslo do nekonzistentnosti izmedju podataka u terminalu i podataka  u JSONu

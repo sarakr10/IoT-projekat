@@ -46,7 +46,7 @@ void send_discovery(int sockfd, struct sockaddr_in server_addr) {
                             "MAN: \"ssdp:discover\"\r\n"
                             "MX: 1\r\n"
                             "ST: ssdp:all\r\n"
-                            "Pozdrav od Releja za pumpu\r\n"
+                            "Emergency_call_module\r\n"
                             "\r\n";
                             
     sendto(sockfd, discovery.c_str(), discovery.length(), 0,(struct sockaddr*)&server_addr, sizeof(server_addr));
@@ -75,7 +75,7 @@ int receive_confirmation(int sockfd, struct sockaddr_in server_addr) {
     
     int bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0,(struct sockaddr*)&server_addr, &server_len);
     if (bytes_received < 0) {
-        std::cerr << "Receive confirmation failed" << std::endl;
+        std::cerr << "ECM Receive confirmation failed" << std::endl;
         return 0;
     }
 
@@ -83,7 +83,7 @@ int receive_confirmation(int sockfd, struct sockaddr_in server_addr) {
     std::string message(buffer);
 
     // Ispisivanje potvrde
-    std::cout << "Emergency Call Module eceived confirmation message from controller:" << std::endl;
+    std::cout << "Emergency Call Module received confirmation message from controller:" << std::endl;
     std::cout << message << std::endl;
 
     return 1;
@@ -100,7 +100,7 @@ int receive_confirmation_with_timeout(int sockfd, struct sockaddr_in server_addr
 
     // Postavljanje vremenskog ogranicenja za socket
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) < 0) {
-        std::cerr << "Error setting socket timeout" << std::endl;
+        std::cerr << "Error setting ECM socket timeout" << std::endl;
         return 0;
     }
 
@@ -124,13 +124,13 @@ int receive_confirmation_with_timeout(int sockfd, struct sockaddr_in server_addr
         int bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&server_addr, &server_len);
         if (bytes_received < 0) {
             // Prijem neuspeo
-            std::cerr << "Receive confirmation failed" << std::endl;
+            std::cerr << "ECM Receive confirmation failed" << std::endl;
             return 0;
         }
         // Prijem uspeo
         buffer[bytes_received] = '\0';
         std::string message(buffer);
-        std::cout << "Received confirmation message from controller:" << std::endl;
+        std::cout << "ECM received confirmation message from controller:" << std::endl;
         std::cout << message << std::endl;
         return 1;
     }
@@ -174,7 +174,7 @@ int main() {
 
     // Pravljenje UDP socket-a
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        std::cerr << "Socket creation  ECM failed" << std::endl;
+        std::cerr << "Socket creation ECM failed" << std::endl;
         return 1;
     }
 

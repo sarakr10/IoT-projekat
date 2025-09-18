@@ -18,7 +18,7 @@ const unsigned short multicast_port = 1900;
 const char* multicast_address = "239.255.255.250";
 const char* mqtt_host = "localhost";
 const int mqtt_port = 1883;
-const char* relay_topic = "actuators/emergency_call_module";
+const char* relay_topic = "actuators/shutdown_relay";
 const char* relay_on = "ON";
 const char* relay_off = "OFF";
 const char* http_server_address = "localhost";
@@ -45,16 +45,16 @@ void send_discovery(int sockfd, struct sockaddr_in server_addr) {
                             "MAN: \"ssdp:discover\"\r\n"
                             "MX: 1\r\n"
                             "ST: ssdp:all\r\n"
-                            "Emergency call module\r\n"
+                            "Machine Shutdown Relay\r\n"
                             "\r\n";
     sendto(sockfd, discovery.c_str(), discovery.length(), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
-    std::cout << "ECM Sent discovery message: " << discovery << std::endl;
+    std::cout << "MSR Sent discovery message: " << discovery << std::endl;
 }
 
 void send_json_response(int sockfd, struct sockaddr_in server_addr, std::string id) {
     Json::Value client_state;
     client_state["id"] = id;
-    client_state["name"] = "Emergency call module";
+    client_state["name"] = "Machine Shutdown Relay";
     client_state["status"] = "Online";
 
     Json::StreamWriterBuilder builder;
@@ -72,7 +72,7 @@ int receive_confirmation_with_timeout(int sockfd, struct sockaddr_in server_addr
     tv.tv_usec = 0;
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) < 0) {
-        std::cerr << "Error setting socket timeout ECM" << std::endl;
+        std::cerr << "Error setting socket timeout MSR" << std::endl;
         return 0;
     }
 
@@ -109,7 +109,7 @@ void send_notify(int sockfd, struct sockaddr_in server_addr, std::string id) {
                          "LOCATION: http://localhost/device\r\n"
                          "\r\n";
     sendto(sockfd, notify.c_str(), notify.length(), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
-    std::cout << "ECM Sent notify message: " << notify << std::endl;
+    std::cout << "MSR Sent notify message: " << notify << std::endl;
 }
 
 void send_byebye(int sockfd, struct sockaddr_in server_addr, std::string id) {
@@ -119,23 +119,23 @@ void send_byebye(int sockfd, struct sockaddr_in server_addr, std::string id) {
                          "USN: uuid:" + id + "\r\n"
                          "\r\n";
     sendto(sockfd, byebye.c_str(), byebye.length(), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
-    std::cout << "ECM Sent byebye message: " << byebye << std::endl;
+    std::cout << "MSR Sent byebye message: " << byebye << std::endl;
 }
 
-void notify_environment_of_ecm_state(const std::string& state) {
+void notify_environment_of_msr_state(const std::string& state) {
     httplib::Client cli(http_server_address, http_server_port);
     httplib::Headers headers = {{"Content-Type", "application/x-www-form-urlencoded"}};
-    httplib::Params params = {{"emergency_call_module", state}};
+    httplib::Params params = {{"machine_shutdown_relay", state}};
     auto res = cli.Post(http_server_endpoint, headers, params);
     if (res) {
         if (res->status == 200) {
-            std::cout << "ECM state notified to environment successfully" << std::endl;
+            std::cout << "MSR state notified to environment successfully" << std::endl;
         } else {
-            std::cerr << "Failed to notify ECM state to environment: " << res->status << " - " << res->body << std::endl;
+            std::cerr << "Failed to notify MSR state to environment: " << res->status << " - " << res->body << std::endl;
         }
     } else {
         auto err = res.error();
-        std::cerr << "Failed to notify ECM state to environment: " << httplib::to_string(err) << std::endl;
+        std::cerr << "Failed to notify MSR state to environment: " << httplib::to_string(err) << std::endl;
     }
 }
 
@@ -145,11 +145,11 @@ void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mo
         std::cout << "Payload: " << (char*)message->payload << std::endl;
 
         if (strcmp((char*)message->payload, relay_on) == 0) {
-            std::cout << "ECM actuator turned ON" << std::endl;
-            notify_environment_of_ecm_state(relay_on);
+            std::cout << "MSR actuator turned ON" << std::endl;
+            notify_environment_of_msr_state(relay_on);
         } else if (strcmp((char*)message->payload, relay_off) == 0) {
-            std::cout << "ECM actuator turned OFF" << std::endl;
-            notify_environment_of_ecm_state(relay_off);
+            std::cout << "MSR actuator turned OFF" << std::endl;
+            notify_environment_of_msr_state(relay_off);
         }
     }
 }
@@ -181,7 +181,7 @@ int main() {
 
     while (!controller_found) {
         send_discovery(sockfd, server_addr);
-        std::cout << "M-SEARCH sent from ECM." << std::endl;
+        std::cout << "M-SEARCH sent from MSR." << std::endl;
 
         bool flag_received = receive_confirmation_with_timeout(sockfd, server_addr, 5);
 
@@ -197,7 +197,7 @@ int main() {
     sigaction(SIGINT, &sig_int_handler, nullptr);
 
     mosquitto_lib_init();
-    struct mosquitto* mosq = mosquitto_new("emergency_call_module", true, NULL);
+    struct mosquitto* mosq = mosquitto_new("machine_shutdown_relay", true, NULL);
     if (!mosq) {
         std::cerr << "Error: Unable to initialize MQTT client.\n";
         return 1;
@@ -217,12 +217,12 @@ int main() {
 
     while (!ctrl_c_received) {
         send_notify(sockfd, server_addr, id);
-        std::cout << "NOTIFY sent ECM.\n" << std::endl;
+        std::cout << "NOTIFY sent MSR.\n" << std::endl;
 
         receive_confirmation_with_timeout(sockfd, server_addr, 3);
 
         send_json_response(sockfd, server_addr, id);
-        std::cout << "ECM Device status sent.\n" << std::endl;
+        std::cout << "MSR Device status sent.\n" << std::endl;
         std::cout << "************************************" << std::endl;
 
         mosquitto_loop(mosq, -1, 1);

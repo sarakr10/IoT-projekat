@@ -15,26 +15,26 @@
 #include "httplib.h"
 #include <sstream>
 
-// ssdp konfiguracija
+// SSDP Configuration
 const unsigned short multicast_port = 1900;
 const char* multicast_address = "239.255.255.250";
 
-// mqtt konfiguracija
+// MQTT Configuration
 const char *mqtt_host = "localhost";
 const int mqtt_port = 1883;
 const char *topic_heart_rate = "sensors/heart_rate";
 
-// da li je ctrl c kliknut
+// Variable to check if CTRL+C was pressed
 volatile sig_atomic_t ctrl_c_received = 0;
 
-// f-ja za ctrl c
+// Function for CTRL+C signal
 void ctrl_c_handler(int signal) {
     if (signal == SIGINT) {
         ctrl_c_received = 1;
     }
 }
 
-// izgenerise id
+// Function to generate a unique device ID
 std::string generate_unique_id() {
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
     int unique_id = std::rand() % 9000 + 1000; 
@@ -47,7 +47,7 @@ void send_discovery(int sockfd, struct sockaddr_in server_addr) {
                             "MAN: \"ssdp:discover\"\r\n"
                             "MX: 1\r\n"
                             "ST: ssdp:all\r\n"
-                            "Emergency_call_module\r\n"
+                            "Heart rate sensor:\r\n"
                             "\r\n";
                             
     sendto(sockfd, discovery.c_str(), discovery.length(), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
@@ -56,8 +56,8 @@ void send_discovery(int sockfd, struct sockaddr_in server_addr) {
 void send_json_response(int sockfd, struct sockaddr_in server_addr, std::string id) {
     Json::Value client_state;
     client_state["id"] = id;
-    client_state["name"] = "Emergency Call Module";
-    client_state["status"] = "OFF";
+    client_state["name"] = "Heart rate sensor";
+    client_state["status"] = "Online";
 
     Json::StreamWriterBuilder builder;
     std::string response = Json::writeString(builder, client_state);
@@ -71,14 +71,14 @@ int receive_confirmation(int sockfd, struct sockaddr_in server_addr) {
     
     int bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&server_addr, &server_len);
     if (bytes_received < 0) {
-        std::cerr << "ECM Receive confirmation failed" << std::endl;
+        std::cerr << "Receive confirmation failed" << std::endl;
         return 0;
     }
 
     buffer[bytes_received] = '\0'; 
     std::string message(buffer);
 
-    std::cout << "Emergency Call Module received confirmation message from controller:" << std::endl;
+    std::cout << "Received confirmation message from controller:" << std::endl;
     std::cout << message << std::endl;
 
     return 1;
@@ -92,7 +92,7 @@ int receive_confirmation_with_timeout(int sockfd, struct sockaddr_in server_addr
     tv.tv_usec = 0;
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) < 0) {
-        std::cerr << "Error setting ECM socket timeout" << std::endl;
+        std::cerr << "Error setting socket timeout" << std::endl;
         return 0;
     }
 
@@ -110,12 +110,12 @@ int receive_confirmation_with_timeout(int sockfd, struct sockaddr_in server_addr
     } else {
         int bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&server_addr, &server_len);
         if (bytes_received < 0) {
-            std::cerr << "ECM Receive confirmation failed" << std::endl;
+            std::cerr << "Receive confirmation failed" << std::endl;
             return 0;
         }
         buffer[bytes_received] = '\0';
         std::string message(buffer);
-        std::cout << "ECM received confirmation message from controller:" << std::endl;
+        std::cout << "Received confirmation message from controller:" << std::endl;
         std::cout << message << std::endl;
         return 1;
     }
@@ -177,9 +177,9 @@ int main() {
 
     std::string id = generate_unique_id();
 
-    // kreira socket za ssdp
+    // Initialize SSDP socket
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        std::cerr << "Socket creation ECM failed" << std::endl;
+        std::cerr << "Socket creation failed" << std::endl;
         return 1;
     }
 
@@ -196,7 +196,7 @@ int main() {
         return 1;
     }
 
-    // pronalazi kontroler
+    // Wait for controller discovery
     bool controller_found = false;
 
     while (!controller_found) {
@@ -210,14 +210,14 @@ int main() {
         }
     }
 
-    // za Ctrl+C
+    // Signal handler for Ctrl+C
     struct sigaction sig_int_handler;
     sig_int_handler.sa_handler = ctrl_c_handler;
     sigemptyset(&sig_int_handler.sa_mask);
     sig_int_handler.sa_flags = 0;
     sigaction(SIGINT, &sig_int_handler, nullptr);
 
-    // inicijalizuje mqtt
+    // Initialize MQTT
     mosquitto_lib_init();
     struct mosquitto *mosq = mosquitto_new("heart_rate_sensor", true, NULL);
     if (!mosq) {
@@ -233,10 +233,10 @@ int main() {
     std::cout << "Heart rate sensor connected!" << std::endl;
     httplib::Client cli("http://localhost:8080");
 
-    // krece mqtt da publishuje na drugoj niti
+    // Start MQTT publishing in separate thread
     std::thread mqtt_thread(publish_heart_rate, mosq, std::ref(cli));
 
-    // glavna petlja za ssdp
+    // Main SSDP loop
     while (!ctrl_c_received) {
         send_notify(sockfd, server_addr, id);
         std::cout << "NOTIFY sent.\n" << std::endl;
@@ -244,13 +244,13 @@ int main() {
         receive_confirmation(sockfd, server_addr);
 
         send_json_response(sockfd, server_addr, id);
-        std::cout << "Emergency Call Module status sent.\n" << std::endl;
+        std::cout << "Heart rate sensor status sent.\n" << std::endl;
         std::cout << "************************************" << std::endl;
 
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
-    // ciscenje
+    // Cleanup
     send_byebye(sockfd, server_addr, id);
     mqtt_thread.join();
 

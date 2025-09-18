@@ -39,6 +39,7 @@ std::string generate_unique_id() {
     return std::to_string(unique_id);
 }
 
+//salje M-SEARCH poruku da bi bio otkriven od strane centralnog kontrolera
 void send_discovery(int sockfd, struct sockaddr_in server_addr) {
     std::string discovery = "M-SEARCH * HTTP/1.1\r\n"
                             "HOST: " + std::string(multicast_address) + ":" + std::to_string(multicast_port) + "\r\n"
@@ -50,7 +51,7 @@ void send_discovery(int sockfd, struct sockaddr_in server_addr) {
     sendto(sockfd, discovery.c_str(), discovery.length(), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
     std::cout << "MSR Sent discovery message: " << discovery << std::endl;
 }
-
+// Kontroleru salje JSON poruku sa svojim podacima
 void send_json_response(int sockfd, struct sockaddr_in server_addr, std::string id) {
     Json::Value client_state;
     client_state["id"] = id;
@@ -64,6 +65,7 @@ void send_json_response(int sockfd, struct sockaddr_in server_addr, std::string 
     //std::cout << "Sent JSON response: " << response << std::endl;
 }
 
+// Ceka odgovor od kontrolera
 int receive_confirmation_with_timeout(int sockfd, struct sockaddr_in server_addr, int timeout_sec) {
     char buffer[1024];
     socklen_t server_len = sizeof(server_addr);
@@ -100,6 +102,7 @@ int receive_confirmation_with_timeout(int sockfd, struct sockaddr_in server_addr
     }
 }
 
+// Salje alive poruku 
 void send_notify(int sockfd, struct sockaddr_in server_addr, std::string id) {
     std::string notify = "NOTIFY * HTTP/1.1\r\n"
                          "HOST: " + std::string(multicast_address) + ":" + std::to_string(multicast_port) + "\r\n"
@@ -112,6 +115,7 @@ void send_notify(int sockfd, struct sockaddr_in server_addr, std::string id) {
     std::cout << "MSR Sent notify message: " << notify << std::endl;
 }
 
+// Salje byeBye poruku
 void send_byebye(int sockfd, struct sockaddr_in server_addr, std::string id) {
     std::string byebye = "NOTIFY * HTTP/1.1\r\n"
                          "HOST: " + std::string(multicast_address) + ":" + std::to_string(multicast_port) + "\r\n"
@@ -122,6 +126,7 @@ void send_byebye(int sockfd, struct sockaddr_in server_addr, std::string id) {
     std::cout << "MSR Sent byebye message: " << byebye << std::endl;
 }
 
+// Kada se relej ukljuci/iskljuci obavestava environment preko HTTP POST zahteva
 void notify_environment_of_msr_state(const std::string& state) {
     httplib::Client cli(http_server_address, http_server_port);
     httplib::Headers headers = {{"Content-Type", "application/x-www-form-urlencoded"}};
@@ -139,6 +144,7 @@ void notify_environment_of_msr_state(const std::string& state) {
     }
 }
 
+// MQTT callback koji reaguje na poruke stigle na temu acturators/shutdown_relay
 void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mosquitto_message* message) {
     if (message->payloadlen) {
         std::cout << "Message received on topic: " << message->topic << std::endl;
@@ -156,14 +162,16 @@ void on_message_callback(struct mosquitto* mosq, void* userdata, const struct mo
 
 int main() {
     int sockfd;
-    struct sockaddr_in server_addr;
+    struct sockaddr_in server_addr;             //adresa multicast grupe
     std::string id = generate_unique_id();
 
+    //pravi UDP soket
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         std::cerr << "Socket creation failed" << std::endl;
         return 1;
     }
 
+    //povezivanje na multicast grupu
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr(multicast_address);
@@ -177,6 +185,7 @@ int main() {
         return 1;
     }
 
+    //slanje M-SEARCH poruke dok ne pronadje konektor
     bool controller_found = false;
 
     while (!controller_found) {
@@ -190,12 +199,14 @@ int main() {
         }
     }
 
+    //ctrl+c handler
     struct sigaction sig_int_handler;
     sig_int_handler.sa_handler = ctrl_c_handler;
     sigemptyset(&sig_int_handler.sa_mask);
     sig_int_handler.sa_flags = 0;
     sigaction(SIGINT, &sig_int_handler, nullptr);
 
+    //inicijalizacija mqrr klijenta
     mosquitto_lib_init();
     struct mosquitto* mosq = mosquitto_new("machine_shutdown_relay", true, NULL);
     if (!mosq) {
@@ -205,6 +216,7 @@ int main() {
 
     mosquitto_message_callback_set(mosq, on_message_callback);
 
+    //povezivanje na mqtt broker i subscribe na temu
     if (mosquitto_connect(mosq, mqtt_host, mqtt_port, 60) != MOSQ_ERR_SUCCESS) {
         std::cerr << "Error: Unable to connect to MQTT broker.\n";
         return 1;

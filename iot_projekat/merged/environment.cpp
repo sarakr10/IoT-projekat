@@ -35,6 +35,9 @@ void simulateEnvironment(EnvironmentState& state) {
         state.heart_rate = heart_values[heart_counter % heart_size];
         heart_counter++;
 
+        // state.temperature = 33.0 + (rand() % 801) / 100.0;  // 33.0 - 41.0°C
+        // state.heart_rate = 40 + (rand() % 76);              // 40 - 115 bpm
+
         // LOGIKA ALARMA
         state.machine_shutdown_active = "OFF";
         state.emergency_call_active = "OFF";
@@ -115,6 +118,7 @@ void startHttpServer(EnvironmentState& state) {
 }
 
 int main() {
+    //srand(time(0)); 
     EnvironmentState environmentState;
     environmentState.temperature = 36.5; 
     environmentState.heart_rate = 75;

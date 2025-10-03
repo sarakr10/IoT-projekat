@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <mosquitto.h>
 #include <jsoncpp/json/json.h>

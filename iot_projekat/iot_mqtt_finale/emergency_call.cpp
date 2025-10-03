@@ -6,7 +6,7 @@
 const char *mqtt_host = "localhost";        //broker
 const int mqtt_port = 1883;                 //port na kom broker slusa
 
-//topic_pump -> topic_emergency_call
+
 const char *topic_emergency_call = "actuators/emergency_call_module";   //topic na kom slusa poruke za modul
 
 //slusa mqtt poruke za emergency call modul i obavestava server
@@ -38,9 +38,6 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
     if (payload == "ON") {
 
         std::cout << std::endl;
-
-        std::cout<<std::endl;
-
         std::cout << "Emergency Call Module actuator turned ON" << std::endl;
         notifyEnvironment("ON");
       
@@ -60,15 +57,21 @@ int main() {
         return 1;
     }
 
+    // registrujemo koja funkcija je callback
     mosquitto_message_callback_set(mosq, on_message);
 
+    // klijent objekat, broker, port na kom broker osluskuje konekcije, keep alive u sekundama
+    // period u kom klijent salje pakete brokeru da bi odrzavao konekciju
     if (mosquitto_connect(mosq, mqtt_host, mqtt_port, 60) != MOSQ_ERR_SUCCESS) {
         std::cerr << "Error: Unable to connect to MQTT broker.\n";
         return 1;
     }
 
+    //klijent objekat, NULL - ne trazi da mu se vrati message ID za ovu pretplatu
+    //naziv topica na koji se pretplacuje, QoS 0 - najniza garancija isporuke
     mosquitto_subscribe(mosq, NULL, topic_emergency_call, 0);
 
+    //beskonacna petlja koja ceka poruke i poziva callback funkciju
     int loop = mosquitto_loop_forever(mosq, -1, 1);
     if (loop != MOSQ_ERR_SUCCESS) {
         std::cerr << "Error: " << mosquitto_strerror(loop) << std::endl;
@@ -79,3 +82,4 @@ int main() {
     mosquitto_lib_cleanup();
     return 0;
 }
+
